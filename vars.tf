@@ -1,8 +1,8 @@
 variable "storage_mover" {
   type = list(object({
-    id                = number
+    id                = string
     name              = string
-    resource_group_id = optional(number)
+    resource_group_id = optional(string)
     description       = optional(string)
     tags              = optional(map(string))
   }))
@@ -13,10 +13,10 @@ variable "storage_mover" {
 
 variable "agent" {
   type = list(object({
-    id                     = number
-    arc_virtual_machine_id = optional(number)
+    id                     = string
+    arc_virtual_machine_id = optional(string)
     name                   = string
-    storage_mover_id       = number
+    storage_mover_id       = string
     description            = optional(string)
   }))
   default     = []
@@ -26,27 +26,32 @@ variable "agent" {
 
 variable "job_definition" {
   type = list(object({
-    id                       = number
+    id                       = string
     copy_mode                = string
     name                     = string
-    source_id                = number
-    storage_mover_project_id = number
-    target_id                = number
+    source_id                = string
+    storage_mover_project_id = string
+    target_id                = string
     source_sub_path          = optional(string)
     target_sub_path          = optional(string)
-    agent_name               = optional(number)
+    agent_id                 = optional(string)
     description              = optional(string)
   }))
   default     = []
   description = <<EOF
     EOF
+
+  validation {
+    condition     = alltrue([for job in var.job_definition : true if contains(["Additive", "Mirror"], job.copy_mode)])
+    error_message = "Specifies the strategy to use for copy. Possible values are Additive and Mirror."
+  }
 }
 
 variable "project" {
   type = list(object({
-    id               = number
+    id               = string
     name             = string
-    storage_mover_id = number
+    storage_mover_id = string
     description      = optional(string)
   }))
   default     = []
@@ -56,10 +61,10 @@ variable "project" {
 
 variable "source_endpoint" {
   type = list(object({
-    id               = number
+    id               = string
     host             = string
     name             = string
-    storage_mover_id = number
+    storage_mover_id = string
     export           = optional(string)
     nfs_version      = optional(string)
     description      = optional(string)
@@ -67,15 +72,20 @@ variable "source_endpoint" {
   default     = []
   description = <<EOF
     EOF
+
+  validation {
+    condition     = alltrue([for source in var.source_endpoint : true if contains(["NFSAuto", "NFSv3", "NFSv4"], source.nfs_version)])
+    error_message = "Specifies the NFS protocol version. Possible values are NFSauto, NFSv3 and NFSv4. Defaults to NFSauto. Changing this forces a new resource to be created."
+  }
 }
 
 variable "target_endpoint" {
   type = list(object({
-    id                   = number
+    id                   = string
     name                 = string
-    storage_account_id   = optional(number)
-    storage_container_id = optional(number)
-    storage_mover_id     = number
+    storage_account_id   = optional(string)
+    storage_container_id = optional(string)
+    storage_mover_id     = string
     description          = optional(string)
   }))
   default     = []
@@ -85,11 +95,11 @@ variable "target_endpoint" {
 
 variable "storage_account" {
   type = list(object({
-    id                       = number
+    id                       = string
     account_replication_type = string
     account_tier             = string
     name                     = string
-    resource_group_id        = optional(number)
+    resource_group_id        = optional(string)
   }))
   default     = []
   description = <<EOF
@@ -98,11 +108,11 @@ variable "storage_account" {
 
 variable "storage_container" {
   type = list(object({
-    id                   = number
+    id                   = string
     name                 = string
-    storage_account_id   = optional(number)
-    storage_container_id = optional(number)
-    storage_mover_id     = number
+    storage_account_id   = optional(string)
+    storage_container_id = optional(string)
+    storage_mover_id     = string
     description          = optional(string)
   }))
   default     = []
@@ -112,7 +122,7 @@ variable "storage_container" {
 
 variable "resource_group" {
   type = list(object({
-    id       = number
+    id       = string
     location = string
     name     = string
   }))
@@ -142,6 +152,6 @@ variable "arc_machine_name" {
 }
 
 variable "tags" {
-  type = map(string)
+  type    = map(string)
   default = {}
 }
